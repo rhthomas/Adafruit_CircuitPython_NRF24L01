@@ -25,8 +25,8 @@
 ================================================================================
 
 CircuitPython port of the nRF24L01 library from Micropython. Modified by Rhys
-Thomas. Ported to work on the Raspberry Pi with Adafruit Blinka SPI and
-DigitalInOut objects.
+Thomas. Ported to work on the Raspberry Pi with Adafruit Blinka `SPI` and
+`DigitalInOut` objects.
 
 * Author(s): Damien P. George, Rhys Thomas
 
