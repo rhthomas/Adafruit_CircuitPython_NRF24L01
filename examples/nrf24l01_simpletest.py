@@ -31,7 +31,7 @@ nrf = NRF24L01(spi, cs, ce, channel=0, payload_size=1)
 TX_DELAY      = 1
 RX_POLL_DELAY = 0.5
 
-def master(buf):
+def master():
     nrf.open_tx_pipe(pipes[0])
     nrf.open_rx_pipe(1, pipes[1])
     nrf.stop_listening()
@@ -49,7 +49,7 @@ def master(buf):
 def slave():
     nrf.open_tx_pipe(pipes[1])
     nrf.open_rx_pipe(1, pipes[0])
-    nrf.stop_listening()
+    nrf.start_listening()
 
     while True:
         if nrf.any():
