@@ -45,6 +45,7 @@ def master():
         except OSError:
             pass
         time.sleep(TX_DELAY)
+        i += 1
 
 def slave():
     nrf.open_tx_pipe(pipes[1])
@@ -67,6 +68,6 @@ print(
         CS on D6
         SPI pins on SPI1
 
-    Run nrf24l01_simpletest.slave() on receiver, and nrf24l01_simpletest.master() on transmitter.
+    Run slave() on receiver, and master() on transmitter.
     '''
 )

@@ -26,6 +26,24 @@ Usage Example
 
 See `examples/` for an example of how to use the library.
 
+To run the example, open a python terminal in the example folder and run the following:
+
+.. code-block:: python
+    
+    >>> from nrf24l01_simpletest import *
+
+        NRF24L01 test module.
+        Pinout:
+            CE on D5
+            CS on D6
+            SPI pins on SPI1
+
+        Run slave() on receiver, and master() on transmitter.
+
+    >>> master()
+    Sending:  0
+    Sending:  1i
+
 Firstly import the necessary packages for your application.
 
 .. code-block:: python
