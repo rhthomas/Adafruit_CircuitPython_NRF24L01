@@ -42,7 +42,7 @@ To run the example, open a python terminal in the example folder and run the fol
 
     >>> master()
     Sending:  0
-    Sending:  1i
+    Sending:  1
 
 Firstly import the necessary packages for your application.
 
