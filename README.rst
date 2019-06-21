@@ -101,7 +101,7 @@ To receive this data, again open the TX and RX pipes and start listening for dat
             if nrf.any():
                 while nrf.any():
                     buf = nrf.recv()
-                    i = sutrct.unpack('i', buf) # byte array formats (`i`) must match
+                    i = struct.unpack('i', buf) # byte array formats (`i`) must maadafruit_bus_device.spi_device.SPIDeviceadafruit_bus_device.spi_device.SPIDeviceadafruit_bus_device.spi_device.SPIDeviceadafruit_bus_device.spi_device.SPIDevicetch
                     print("Received: ", i)
                     time.sleep(0.5) # poll every 0.5s for new data
 
