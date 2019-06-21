@@ -20,7 +20,7 @@ from adafruit_circuitpython_nrf24l01 import NRF24L01
 pipes = (b'\x01\x02\x03\x04\x00', b'\x01\x02\x03\x04\x01')
 
 ce = dio.DigitalInOut(board.D5)
-cs = dio.DigitalInOut(board.D6)
+cs = dio.DigitalInOut(board.D7)
 
 cs.direction = dio.Direction.OUTPUT
 ce.direction = dio.Direction.OUTPUT
@@ -43,7 +43,8 @@ def master():
             print("Sending: ", i)
             nrf.send(struct.pack('i', i))
         except OSError:
-            pass
+            print('send() failed')
+        except KeyboardInterrupt: break
         time.sleep(TX_DELAY)
         i += 1
 
@@ -53,19 +54,20 @@ def slave():
     nrf.start_listening()
 
     while True:
-        if nrf.any():
-            while nrf.any():
+        try:
+            if nrf.any():
                 buf = nrf.recv()
-                i = sutrct.unpack('i', buf)
+                i = struct.unpack('i', buf)
                 print("Received: ", i)
-                time.sleep(RX_POLL_DELAY)
+            time.sleep(RX_POLL_DELAY)
+        except KeyboardInterrupt: break
 
 print(
     '''
     NRF24L01 test module.
     Pinout:
         CE on D5
-        CS on D6
+        CS on D7
         SPI pins on SPI1
 
     Run slave() on receiver, and master() on transmitter.
