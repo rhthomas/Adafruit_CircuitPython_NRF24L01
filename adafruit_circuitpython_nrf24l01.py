@@ -52,7 +52,8 @@ Implementation Notes
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/rhthomas/Adafruit_circuitpython_CircuitPython_nrf24l01.git"
-
+import busio
+from adafruit_bus_device.spi_device import SPIDevice
 import time
 
 # nRF24L01+ registers
@@ -100,95 +101,88 @@ FLUSH_TX     = 0xe1 # flush TX FIFO
 FLUSH_RX     = 0xe2 # flush RX FIFO
 NOP          = 0xff # use to read STATUS register
 
-class NRF24L01:
-    def __init__(self, spi, cs, ce, channel=46, payload_size=16):
+class NRF24L01(SPIDevice):
+    def __init__(self, spi, csn, ce, channel=46, payload_size=32, baudrate=4000000, polarity=0, phase=0, extra_clocks=0):
+        # max payload size is 32 bytes
         assert payload_size <= 32
-
+        self.payload_size = payload_size
+        # last address assigned to pipe0 for reading. init to None
+        self.pipe0_read_addr = None
+        
+        # init the SPI bus and pins
+        super(NRF24L01, self).__init__(spi, chip_select=csn, baudrate=baudrate, polarity=polarity, phase=phase, extra_clocks=extra_clocks)
+        # init the buffer used to store data from spi transactions
         self.buf = bytearray(1)
 
-        # store the pins
-        self.spi = spi
-        self.cs = cs
+        # store the ce pin
         self.ce = ce
-
-        # init the SPI bus and pins
-        self.init_spi(4000000)
-
-        # reset everything
+        # reset ce.value & power up the chip
         self.ce.value = 0
         self.ce.value = 1
+        # according to datasheet we must wait for pin to settle
+        # this depends on the capacitor used on the VCC & GND 
+        # assuming a 100nF (HIGHLY RECOMMENDED) wait time is slightly < 5ms
+        time.sleep(0.005)
+        with self as spi:
+            # set address width to 5 bytes and check for device present
+            self.reg_write(SETUP_AW, 0b11)
+            if self.reg_read(SETUP_AW) != 0b11:
+                raise OSError("nRF24L01+ Hardware not responding")
 
-        self.payload_size = payload_size
-        self.pipe0_read_addr = None
-        time.sleep(0.005) # 5ms sleep
+            # disable dynamic payloads
+            self.reg_write(DYNPD, 0)
 
-        # set address width to 5 bytes and check for device present
-        self.reg_write(SETUP_AW, 0b11)
-        if self.reg_read(SETUP_AW) != 0b11:
-            raise OSError("nRF24L01+ Hardware not responding")
+            # auto retransmit delay: 1750us
+            # auto retransmit count: 8
+            self.reg_write(SETUP_RETR, (6 << 4) | 8)
 
-        # disable dynamic payloads
-        self.reg_write(DYNPD, 0)
+            # set rf power and speed
+            self.set_power_speed(POWER_3, SPEED_250K) # Best for point to point links
 
-        # auto retransmit delay: 1750us
-        # auto retransmit count: 8
-        self.reg_write(SETUP_RETR, (6 << 4) | 8)
+            # init CRC
+            self.set_crc(2)
 
-        # set rf power and speed
-        self.set_power_speed(POWER_3, SPEED_250K) # Best for point to point links
+            # clear status flags
+            self.reg_write(STATUS, RX_DR | TX_DS | MAX_RT)
 
-        # init CRC
-        self.set_crc(2)
+            # set channel
+            self.set_channel(channel)
 
-        # clear status flags
-        self.reg_write(STATUS, RX_DR | TX_DS | MAX_RT)
-
-        # set channel
-        self.set_channel(channel)
-
-        # flush buffers
-        self.flush_rx()
-        self.flush_tx()
-
-    def init_spi(self, baudrate):
-        # take SPI lock
-        while not self.spi.try_lock():
-            pass
-
-        # configure peripheral
-        self.spi.configure(baudrate=baudrate)
+            # flush buffers
+            self.flush_rx()
+            self.flush_tx()
 
     def reg_read(self, reg):
-        self.cs.value = 0
+        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=reg)
         self.spi.readinto(self.buf)
-        self.cs.value = 1
+        self.csn.value = 1
         return self.buf[0]
 
     def reg_write_bytes(self, reg, buf):
-        self.cs.value = 0
+        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=(0x20 | reg))
         self.spi.write(buf)
-        self.cs.value = 1
+        self.csn.value = 1
         return self.buf[0]
 
     def reg_write(self, reg, value):
-        self.cs.value = 0
+        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=(0x20 | reg))
         ret = self.buf[0]
         self.spi.readinto(self.buf, write_value=value)
-        self.cs.value = 1
+        self.csn.value = 1
         return ret
 
     def flush_rx(self):
-        self.cs.value = 0
+        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=FLUSH_RX)
-        self.cs.value = 1
+        self.csn.value = 1
 
     def flush_tx(self):
-        self.cs.value = 0
+        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=FLUSH_TX)
-        self.cs.value = 1
+        self.csn.value = 1
 
     # power is one of POWER_x defines; speed is one of SPEED_x defines
     def set_power_speed(self, power, speed):
@@ -254,10 +248,10 @@ class NRF24L01:
 
     def recv(self):
         # get the data
-        self.cs.value = 0
+        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=R_RX_PAYLOAD)
         buf = self.spi.read(self.payload_size)
-        self.cs.value = 1
+        self.csn.value = 1
         # clear RX ready flag
         self.reg_write(STATUS, RX_DR)
 
@@ -279,12 +273,12 @@ class NRF24L01:
         self.reg_write(CONFIG, (self.reg_read(CONFIG) | PWR_UP) & ~PRIM_RX)
         time.sleep(0.00015)
         # send the data
-        self.cs.value = 0
+        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=W_TX_PAYLOAD)
         self.spi.write(buf)
         if len(buf) < self.payload_size:
             self.spi.write(b'\x00' * (self.payload_size - len(buf))) # pad out data
-        self.cs.value = 1
+        self.csn.value = 1
 
         # enable the chip so it can send the data
         self.ce.value = 1
