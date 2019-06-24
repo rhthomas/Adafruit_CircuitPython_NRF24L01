@@ -270,12 +270,10 @@ class NRF24L01(SPIDevice):
         self._reg_write(CONFIG, (self._reg_read(CONFIG) | PWR_UP) & ~PRIM_RX)
         time.sleep(0.00015)
         # send the data
-        self.csn.value = 0
         self.spi.readinto(self.buf, write_value=W_TX_PAYLOAD)
         self.spi.write(buf)
         if len(buf) < self.payload_size:
             self.spi.write(b'\x00' * (self.payload_size - len(buf))) # pad out data
-        self.csn.value = 1
 
         # enable the chip so it can send the data
         self.ce.value = 1
