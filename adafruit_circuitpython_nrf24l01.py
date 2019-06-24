@@ -123,7 +123,7 @@ class NRF24L01(SPIDevice):
         # this depends on the capacitor used on the VCC & GND 
         # assuming a 100nF (HIGHLY RECOMMENDED) wait time is slightly < 5ms
         time.sleep(0.005)
-        with self as spi:
+        with self:
             # set address width to 5 bytes and check for device present
             self._reg_write(SETUP_AW, 0b11)
             if self._reg_read(SETUP_AW) != 0b11:
