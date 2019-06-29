@@ -22,9 +22,6 @@ pipes = (b'\x01\x02\x03\x04\x00', b'\x01\x02\x03\x04\x01')
 ce = dio.DigitalInOut(board.D8)
 cs = dio.DigitalInOut(board.D5)
 
-cs.direction = dio.Direction.OUTPUT
-ce.direction = dio.Direction.OUTPUT
-
 spi = SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 nrf = NRF24L01(spi, cs, ce)
 

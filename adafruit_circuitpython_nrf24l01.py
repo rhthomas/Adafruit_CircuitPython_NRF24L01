@@ -112,12 +112,12 @@ class NRF24L01(SPIDevice):
         # init the SPI bus and pins
         super(NRF24L01, self).__init__(spi, chip_select=csn, baudrate=baudrate, polarity=polarity, phase=phase, extra_clocks=extra_clocks)
         # init the buffer used to store data from spi transactions
-        self.buf = bytearray(1)
+        self.buf = bytearray(self.payload_size)
 
         # store the ce pin
         self.ce = ce
         # reset ce.value & power up the chip
-        self.ce.value = 0
+        self.ce.switch_to_output(value=False)
         self.ce.value = 1
         # according to datasheet we must wait for pin to settle
         # this depends on the capacitor used on the VCC & GND 
