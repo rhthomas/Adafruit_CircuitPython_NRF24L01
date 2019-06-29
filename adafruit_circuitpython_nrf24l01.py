@@ -151,6 +151,8 @@ class NRF24L01(SPIDevice):
 
         # set channel
         self.set_channel(channel)
+        # put to sleep
+        self.ce.value = 0
 
     def _reg_read(self, reg):
         self.spi.readinto(self.buf, write_value=reg)
