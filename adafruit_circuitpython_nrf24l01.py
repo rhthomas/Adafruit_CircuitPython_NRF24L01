@@ -233,14 +233,13 @@ class NRF24L01(SPIDevice):
 
             if self.pipe0_read_addr is not None:
                 self._reg_write_bytes(RX_ADDR_P0, self.pipe0_read_addr)
-
-            self.flush_rx()
-            self.flush_tx()
+            self._flush_rx()
+            self._flush_tx()
 
     def stop_listening(self):
         with self:
-            self.flush_tx()
-            self.flush_rx()
+            self._flush_tx()
+            self._flush_rx()
         self.ce.value = 0
 
     # returns True if any data available to recv
