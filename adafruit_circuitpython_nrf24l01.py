@@ -256,16 +256,20 @@ class NRF24L01(SPIDevice):
     # blocking wait for tx complete
     def send(self, buf, timeout=0.500):
         with self:
-            self.send_start(buf)
+            self._send_start(buf)
             start = time.monotonic()
             result = None
             while result is None and (time.monotonic() - start) < timeout:
-                result = self.send_done() # 1 == success, 2 == fail
+                result = self._send_done() # 1 == success, 2 == fail
             if result == 2:
                 raise OSError("send failed")
 
     # non-blocking tx
-    def send_start(self, buf):
+    def _send_start(self, buf):
+        # enable the chip so it can send the data
+        self.ce.value = 1
+        time.sleep(0.000015) # needs to be >10us
+        self.ce.value = 0
         # power up
         self._reg_write(CONFIG, (self._reg_read(CONFIG) | PWR_UP) & ~PRIM_RX)
         time.sleep(0.00015)
@@ -275,13 +279,8 @@ class NRF24L01(SPIDevice):
         if len(buf) < self.payload_size:
             self.spi.write(b'\x00' * (self.payload_size - len(buf))) # pad out data
 
-        # enable the chip so it can send the data
-        self.ce.value = 1
-        time.sleep(0.000015) # needs to be >10us
-        self.ce.value = 0
-
     # returns None if send still in progress, 1 for success, 2 for fail
-    def send_done(self):
+    def _send_done(self):
         if not (self._reg_read(STATUS) & (TX_DS | MAX_RT)):
             return None # tx not finished
 

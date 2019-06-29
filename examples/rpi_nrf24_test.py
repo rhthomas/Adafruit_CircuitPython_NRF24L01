@@ -26,7 +26,7 @@ cs.direction = dio.Direction.OUTPUT
 ce.direction = dio.Direction.OUTPUT
 
 spi = SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
-nrf = NRF24L01(spi, cs, ce, channel=0, payload_size=1)
+nrf = NRF24L01(spi, cs, ce)
 
 TX_DELAY      = 1
 RX_POLL_DELAY = 0.5
