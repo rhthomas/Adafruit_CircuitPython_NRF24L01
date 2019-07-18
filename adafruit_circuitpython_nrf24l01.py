@@ -123,7 +123,7 @@ class NRF24L01(SPIDevice):
             # according to datasheet we must wait for pin to settle
             # this depends on the capacitor used on the VCC & GND 
             # assuming a 100nF (HIGHLY RECOMMENDED) wait time is slightly < 5ms
-            time.sleep(0.000015)
+            time.sleep(0.005)
             # set address width to 5 bytes and check for device present
             self._reg_write(SETUP_AW, 0b11)
             if self._reg_read(SETUP_AW) != 0b11:
@@ -184,7 +184,7 @@ class NRF24L01(SPIDevice):
     # length in bytes: 0, 1 or 2
     def set_crc(self, length):
         with self as spi:
-            time.sleep(0.000015)
+            time.sleep(0.005)
             config = self._reg_read(CONFIG) & ~(CRCO | EN_CRC)
             if length == 0:
                 pass
@@ -202,7 +202,7 @@ class NRF24L01(SPIDevice):
     def open_tx_pipe(self, address):
         assert len(address) == 5
         with self:
-            time.sleep(0.000015)
+            time.sleep(0.005)
             self._reg_write_bytes(RX_ADDR_P0, address)
             self._reg_write_bytes(TX_ADDR, address)
             self._reg_write(RX_PW_P0, self.payload_size)
@@ -214,7 +214,7 @@ class NRF24L01(SPIDevice):
         assert len(address) == 5
         assert 0 <= pipe_id <= 5
         with self:
-            time.sleep(0.000015)
+            time.sleep(0.005)
             if pipe_id == 0:
                 self.pipe0_read_addr = address
             if pipe_id < 2:
@@ -227,7 +227,7 @@ class NRF24L01(SPIDevice):
     def start_listening(self):
         self.ce.value = 1
         with self:
-            time.sleep(0.000015)
+            time.sleep(0.005)
             self._reg_write(CONFIG, self._reg_read(CONFIG) | PWR_UP | PRIM_RX)
             self._reg_write(STATUS, RX_DR | TX_DS | MAX_RT)
 
@@ -249,7 +249,7 @@ class NRF24L01(SPIDevice):
 
     def recv(self):
         with self as spi:
-            time.sleep(0.000015)
+            time.sleep(0.005)
             # get the data
             spi.readinto(self.buf, write_value=R_RX_PAYLOAD)
             buf = spi.read(self.payload_size)
@@ -264,7 +264,7 @@ class NRF24L01(SPIDevice):
         self.ce.value = 1
         self.ce.value = 0
         with self:
-            time.sleep(0.000015) # needs to be >10us
+            time.sleep(0.005) # needs to be >10us
             self._send_start(buf)
             start = time.monotonic()
             result = None
