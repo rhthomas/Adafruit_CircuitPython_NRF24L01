@@ -125,8 +125,8 @@ class NRF24L01(SPIDevice):
             # assuming a 100nF (HIGHLY RECOMMENDED) wait time is slightly < 5ms
             time.sleep(0.005)
             # set address width to 5 bytes and check for device present
-            print('writing setup_aw returned', self._reg_write(SETUP_AW, 0b11))
-            isThere = self._reg_read(SETUP_AW)
+            print('writing setup_aw returned', bin(self._reg_write(SETUP_AW, 0b11)))
+            isThere = bin(self._reg_read(SETUP_AW))
             if isThere != 0b11:
                 print('setup_aw returned', isThere)
                 raise OSError("nRF24L01+ Hardware not responding")
@@ -159,7 +159,8 @@ class NRF24L01(SPIDevice):
     def _reg_read(self, reg):
         self.spi.readinto(self.buf, write_value=reg)
         self.spi.readinto(self.buf)
-        return self.buf[0]
+        print('buffer after readinto reg', reg, '=', repr(self.buf))
+        return self.buf[1]
 
     def _reg_write_bytes(self, reg, buf):
         self.spi.readinto(self.buf, write_value=(0x20 | reg))
