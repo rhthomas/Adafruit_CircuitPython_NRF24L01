@@ -111,8 +111,8 @@ class NRF24L01(SPIDevice):
         
         # init the SPI bus and pins
         super(NRF24L01, self).__init__(spi, chip_select=csn, baudrate=baudrate, polarity=polarity, phase=phase, extra_clocks=extra_clocks)
-        # init the buffer used to store data from spi transactions
-        self.buf = bytearray(self.payload_size)
+        # init the buffer used to store status data from spi transactions
+        self.buf = bytearray(1)
 
         # store the ce pin
         self.ce = ce
@@ -125,10 +125,8 @@ class NRF24L01(SPIDevice):
             # assuming a 100nF (HIGHLY RECOMMENDED) wait time is slightly < 5ms
             time.sleep(0.005)
             # set address width to 5 bytes and check for device present
-            print('writing setup_aw returned', bin(self._reg_write(SETUP_AW, 0b11)))
-            isThere = bin(self._reg_read(SETUP_AW))
-            if isThere != 0b11:
-                print('setup_aw returned', isThere)
+            self._reg_write(SETUP_AW, 0b11)
+            if self._reg_read(SETUP_AW) != 0b11:
                 raise OSError("nRF24L01+ Hardware not responding")
 
             # disable dynamic payloads
@@ -159,17 +157,19 @@ class NRF24L01(SPIDevice):
     def _reg_read(self, reg):
         self.spi.readinto(self.buf, write_value=reg)
         self.spi.readinto(self.buf)
-        print('buffer after readinto reg', reg, '=', repr(self.buf))
-        return self.buf[1]
+        print('status data from readinto({}) = {}'.format(reg, bin(self.buf[0])))
+        return self.buf[0]
 
     def _reg_write_bytes(self, reg, buf):
         self.spi.readinto(self.buf, write_value=(0x20 | reg))
+        print('status data from readinto({}) = {}\nwriting bytes {}'.format(reg, bin(self.buf[0]), repr(buf)))
         self.spi.write(buf)
         return self.buf[0]
 
     def _reg_write(self, reg, value):
         self.spi.readinto(self.buf, write_value=(0x20 | reg))
         ret = self.buf[0]
+        print('status data from readinto({}) = {}\nwriting value {}'.format(reg, bin(self.buf[0]), bin(value)))
         self.spi.readinto(self.buf, write_value=value)
         return ret
 
