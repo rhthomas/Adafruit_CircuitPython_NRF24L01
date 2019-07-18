@@ -125,8 +125,10 @@ class NRF24L01(SPIDevice):
             # assuming a 100nF (HIGHLY RECOMMENDED) wait time is slightly < 5ms
             time.sleep(0.005)
             # set address width to 5 bytes and check for device present
-            self._reg_write(SETUP_AW, 0b11)
-            if self._reg_read(SETUP_AW) != 0b11:
+            print('writing setup_aw returned', self._reg_write(SETUP_AW, 0b11))
+            isThere = self._reg_read(SETUP_AW)
+            if isThere != 0b11:
+                print('setup_aw returned', isThere)
                 raise OSError("nRF24L01+ Hardware not responding")
 
             # disable dynamic payloads

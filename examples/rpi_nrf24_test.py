@@ -19,10 +19,12 @@ from adafruit_circuitpython_nrf24l01 import NRF24L01
 
 pipes = (b'\x01\x02\x03\x04\x00', b'\x01\x02\x03\x04\x01')
 
-ce = dio.DigitalInOut(board.D8)
+ce = dio.DigitalInOut(board.CE0)
+# ce = dio.DigitalInOut(board.D8)
 cs = dio.DigitalInOut(board.D5)
 
-spi = SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+# spi = SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+spi = board.SPI()
 nrf = NRF24L01(spi, cs, ce)
 
 TX_DELAY      = 1
